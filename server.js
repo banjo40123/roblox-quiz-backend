@@ -10,7 +10,9 @@ const DATA_FILE = path.join(__dirname, 'data', 'results.json');
 
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
-app.use(express.static('public'));
+
+// เสิร์ฟไฟล์ static จาก public/ (index.html จะถูกเสิร์ฟอัตโนมัติเมื่อเข้า /)
+app.use(express.static(path.join(__dirname, 'public')));
 
 async function ensureFile() {
   await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
@@ -47,12 +49,10 @@ app.post('/api/submit-result', async (req, res) => {
   }
 });
 
-// Dashboard ดึงข้อมูลทั้งหมด
 app.get('/api/results', async (_req, res) => {
   res.json(await loadAll());
 });
 
-// สถิติรวม
 app.get('/api/stats', async (_req, res) => {
   const all = await loadAll();
   const stats = {
@@ -78,7 +78,6 @@ app.get('/api/stats', async (_req, res) => {
   res.json(stats);
 });
 
-// ลบข้อมูลทั้งหมด (ใช้ตอน demo/reset)
 app.post('/api/reset', async (req, res) => {
   if (req.headers['x-api-key'] !== API_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
