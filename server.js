@@ -88,6 +88,5 @@ app.post('/api/reset', async (req, res) => {
 });
 
 app.get('/health', (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
-app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'roblox-reports.html')));
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
