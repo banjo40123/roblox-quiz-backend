@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><title>ข้อมูลโปรเจ็ค — GAST Quiz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="float-shapes"><div></div><div></div><div></div><div></div></div>
+
+<header class="header"><nav class="nav">
+  <a href="index.html" class="logo"><span class="emoji">🎮</span><span>GAST Quiz</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">🏠 หน้าหลัก</a></li>
+    <li><a href="dashboard.html">📊 Dashboard</a></li>
+    <li><a href="criteria.html">📋 เกณฑ์วัดผล</a></li>
+    <li><a href="assessment.html">📝 แบบประเมิน</a></li>
+    <li><a href="info.html" class="active">ℹ️ ข้อมูลโปรเจ็ค</a></li>
+  </ul>
+</nav></header>
+
+<main class="container">
+  <section class="hero fade-in">
+    <h1>ℹ️ ข้อมูลโปรเจ็ค</h1>
+    <p>เกม Roblox ผสานแบบทดสอบ GAST เพื่อประเมินการติดเกมในเด็ก ผ่านการเล่นที่สนุก</p>
+  </section>
+
+  <section class="section">
+    <h2><span class="emoji">🎯</span> เป้าหมายโปรเจ็ค</h2>
+    <div class="card">
+      <p style="line-height:1.9;">โปรเจ็คนี้พัฒนาขึ้นเพื่อ <strong>เปลี่ยนการทำแบบทดสอบจิตวิทยาให้สนุกสำหรับเด็ก</strong> โดยใช้เกม Roblox เป็นสื่อกลาง เด็กจะได้เล่นและตอบคำถามผ่านการเดินผ่านประตู โดยที่ครู/ผู้ปกครองสามารถดูผลประเมินแบบ realtime ผ่านเว็บแดชบอร์ดนี้</p>
+      <ul style="margin-top:14px;line-height:2;list-style:none;">
+        <li>✨ <strong>เด็กไม่รู้สึกว่าถูกทดสอบ</strong> — เล่นเหมือนเกม</li>
+        <li>📊 <strong>ครูเห็นผลทันที</strong> — ไม่ต้องตรวจกระดาษ</li>
+        <li>🎮 <strong>กราฟิก 3D สีสันสด</strong> — เหมาะกับเด็กประถม</li>
+        <li>🔬 <strong>อิงเกณฑ์ GAST มาตรฐาน</strong> — มีงานวิจัยรองรับ</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span class="emoji">🎮</span> เกม Roblox: Quiz Time</h2>
+    <div class="card">
+      <div class="grid grid-2" style="align-items:center;">
+        <div>
+          <h3 style="color:var(--primary-dark);margin-bottom:12px;">ทำไมต้อง Roblox?</h3>
+          <ul style="line-height:2;list-style:none;">
+            <li>🎯 เด็กไทยอายุ 7-15 เล่น Roblox อยู่แล้ว</li>
+            <li>🆓 เล่นฟรี ไม่ต้องติดตั้งโปรแกรมเพิ่ม</li>
+            <li>📱 เล่นได้ทั้ง PC, มือถือ, แท็บเล็ต</li>
+            <li>🌐 แชร์ลิงก์ผู้เล่นได้ทันที</li>
+          </ul>
+          <div style="margin-top:20px;">
+            <a href="#" id="robloxLink" class="btn btn-accent btn-large" target="_blank">🚀 เล่นเกมเลย</a>
+          </div>
+          <p style="margin-top:10px;color:var(--gray);font-size:0.85rem;">* URL จะใส่หลัง publish เกม (แทน YOUR_ROBLOX_GAME_URL ในไฟล์ info.html)</p>
+        </div>
+        <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:20px;padding:40px;text-align:center;color:white;">
+          <div style="font-size:6rem;animation:bounce 2s infinite;">🎮</div>
+          <h3 style="margin-top:10px;">Quiz Time</h3>
+          <p style="opacity:0.9;margin-top:8px;">15 ด่าน · 3 ฉาก · เล่น 5-10 นาที</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span class="emoji">🗺️</span> 3 ฉากในเกม</h2>
+    <div class="grid grid-3">
+      <div class="phase-card phase-1"><span class="icon">🌅</span><h3>ฉาก 1: หมู่บ้านยามเช้า</h3><p style="margin:10px 0;">วัด <strong>PREOCCUPATION</strong></p><p style="font-size:0.9rem;">ทุ่งดอกไม้, บ้านไม้, ต้นไม้พุ่ม, บ่อน้ำ, โคมไฟอบอุ่น</p></div>
+      <div class="phase-card phase-2"><span class="icon">🏪</span><h3>ฉาก 2: ตลาดกลางวัน</h3><p style="margin:10px 0;">วัด <strong>CONTROL</strong></p><p style="font-size:0.9rem;">ร้านตลาดสีสด, หม้อต้มอาหาร, ธงประดับ, ลังสินค้า</p></div>
+      <div class="phase-card phase-3"><span class="icon">🌃</span><h3>ฉาก 3: เมืองยามค่ำคืน</h3><p style="margin:10px 0;">วัด <strong>IMPAIRMENT</strong></p><p style="font-size:0.9rem;">ตึกระฟ้า, ไฟนีออน, ลำแสงพุ่งฟ้า, รถยนต์, หมอกบาง</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span class="emoji">🎯</span> วิธีเล่นเกม</h2>
+    <div class="card">
+      <ol style="line-height:2;padding-left:30px;">
+        <li>เข้าเกมผ่านลิงก์ Roblox</li>
+        <li>เดินตามทางเดิน (กล้องจะ zoom เข้าให้เห็นกำแพงชัด)</li>
+        <li>อ่านคำถามด้านบนกำแพง</li>
+        <li>เลือกประตู — ซ้าย/ขวาตามคำตอบที่คิดว่าใช่</li>
+        <li>ผิด = ตาย → respawn ที่ checkpoint เริ่มใหม่ข้อเดิม</li>
+        <li>ถูก = พลุฉลอง + เหรียญ +10</li>
+        <li>จบ 5 ด่าน → วาปไปฉากต่อไป</li>
+        <li>จบครบ 15 ด่าน → popup สรุปผล + Risk Score + กลุ่มเสี่ยง</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span class="emoji">🛠️</span> เทคโนโลยี</h2>
+    <div class="grid grid-3">
+      <div class="card"><h3 style="color:var(--primary-dark)">🎮 Frontend Game</h3><p style="margin-top:8px;color:var(--gray);">Roblox Studio + Luau</p></div>
+      <div class="card"><h3 style="color:var(--primary-dark)">🌐 Backend API</h3><p style="margin-top:8px;color:var(--gray);">Node.js + Express, JSON file storage</p></div>
+      <div class="card"><h3 style="color:var(--primary-dark)">☁️ Hosting</h3><p style="margin-top:8px;color:var(--gray);">Render.com (Free Tier)</p></div>
+      <div class="card"><h3 style="color:var(--primary-dark)">📊 Dashboard</h3><p style="margin-top:8px;color:var(--gray);">HTML + Chart.js</p></div>
+      <div class="card"><h3 style="color:var(--primary-dark)">🔐 Security</h3><p style="margin-top:8px;color:var(--gray);">API Key (x-api-key header)</p></div>
+      <div class="card"><h3 style="color:var(--primary-dark)">📜 Code Base</h3><p style="margin-top:8px;color:var(--gray);">GitHub Public Repository</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span class="emoji">📚</span> อ้างอิง</h2>
+    <div class="card">
+      <p style="line-height:1.9;">แบบทดสอบ <strong>Game Addiction Screening Test (GAST)</strong> เป็นเครื่องมือคัดกรองที่พัฒนาในประเทศไทย ใช้ในงานวิจัยจิตเวชเด็กและคลินิกสุขภาพจิต โดยปรับลดจาก 16 ข้อมาตรฐาน เหลือ 15 ข้อ เพื่อให้แบ่งเป็น 3 ด่าน ด่านละ 5 ข้อ ลงตัวสำหรับ gameplay</p>
+      <p style="margin-top:14px;color:var(--gray);font-size:0.9rem;">⚠️ <strong>ข้อจำกัด:</strong> ผลจากเครื่องมือนี้เป็นเพียงการคัดกรองเบื้องต้น ไม่ใช่การวินิจฉัยทางการแพทย์ หากผลออกมาเป็น "น่าจะติด" ควรปรึกษาจิตแพทย์เด็กหรือนักจิตวิทยาเพื่อประเมินเชิงลึก</p>
+    </div>
+  </section>
+</main>
+
+<button class="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<footer class="footer"><p>🎮 GAST Quiz Project — Game Addiction Screening Test for Children</p></footer>
+<script>
+// ⚠️ แก้ URL Roblox เป็นของจริงหลัง publish
+document.getElementById('robloxLink').href = 'https://www.roblox.com/games/YOUR_ROBLOX_GAME_ID';
+window.addEventListener('scroll',()=>{document.querySelector('.back-to-top').classList.toggle('show',window.scrollY>400);});
+</script>
+</body>
+</html>
