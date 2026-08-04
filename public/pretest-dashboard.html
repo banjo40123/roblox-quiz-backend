@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><title>ข้อมูล Pre-test — GAST Quiz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="float-shapes"><div></div><div></div><div></div><div></div></div>
+
+<header class="header"><nav class="nav">
+  <a href="index.html" class="logo"><span class="emoji">🎮</span><span>GAST Quiz</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">🏠 หน้าหลัก</a></li>
+    <li><a href="dashboard.html">📊 Dashboard</a></li>
+    <li><a href="criteria.html">📋 เกณฑ์วัดผล</a></li>
+    <li><a href="assessment.html">📝 แบบประเมิน</a></li>
+    <li><a href="pretest.html">🧪 Pre-test</a></li>
+    <li><a href="pretest-dashboard.html" class="active">📈 ข้อมูล Pre-test</a></li>
+    <li><a href="info.html">ℹ️ ข้อมูลโปรเจ็ค</a></li>
+  </ul>
+</nav></header>
+
+<main class="container">
+  <section class="hero fade-in">
+    <h1>📈 ข้อมูล Pre-test &amp; เปรียบเทียบ Pre/Post</h1>
+    <p>ดูผล Pre-test ที่เก็บไว้ทั้งหมด และผลเปรียบเทียบกับ Post-test (ผลในเกม) ของผู้เล่นคนเดียวกัน</p>
+    <p style="margin-top:8px;font-size:0.95rem;opacity:0.9;">อัปเดตล่าสุด: <span id="updateTime">-</span></p>
+  </section>
+
+  <!-- ================= ส่วนที่ 1: Pre-test ดิบ ================= -->
+  <section class="section">
+    <h2><span class="emoji">🧪</span> ผล Pre-test ทั้งหมด</h2>
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="refresh()">🔄 รีเฟรช</button>
+      <button class="btn btn-accent" onclick="exportPretestCSV()">📥 ส่งออก Pre-test CSV</button>
+    </div>
+
+    <div class="grid grid-4">
+      <div class="card stat"><div class="value" id="preTotalCount">-</div><div class="label">ทำ Pre-test แล้ว</div></div>
+      <div class="card stat"><div class="value" id="preNormalCount" style="color:#10b981">-</div><div class="label">🟢 กลุ่มปกติ</div></div>
+      <div class="card stat"><div class="value" id="preRiskCount" style="color:#f59e0b">-</div><div class="label">🟡 กลุ่มคลั่งไคล้</div></div>
+      <div class="card stat"><div class="value" id="preAddictCount" style="color:#ef4444">-</div><div class="label">🔴 น่าจะติดเกม</div></div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;margin-top:20px;">
+      <div style="max-height:500px;overflow:auto;">
+        <table>
+          <thead><tr>
+            <th>รหัสผู้เล่น</th><th>เพศ</th><th>อายุ</th><th>ชั้น</th>
+            <th>เวลาเล่น/วัน</th>
+            <th>หมกมุ่น<br><small>/18</small></th>
+            <th>ควบคุม<br><small>/15</small></th>
+            <th>ผลกระทบ<br><small>/15</small></th>
+            <th>คะแนนรวม<br><small>/48</small></th>
+            <th>กลุ่ม</th><th>วันที่ทำ</th>
+          </tr></thead>
+          <tbody id="preTbody"><tr><td colspan="11" style="text-align:center;padding:40px;color:var(--gray);">รอข้อมูล...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ส่วนที่ 2: เปรียบเทียบ Pre/Post ================= -->
+  <section class="section">
+    <h2><span class="emoji">📊</span> เปรียบเทียบ Pre-test กับ Post-test (ผลในเกม)</h2>
+    <p style="margin-bottom:16px;color:var(--gray);">จับคู่เฉพาะผู้เล่นที่ทำทั้ง Pre-test และเล่นเกมจบแล้ว (รหัสผู้เล่นต้องตรงกัน)</p>
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+      <button class="btn btn-accent" onclick="exportComparisonCSV()">📥 ส่งออกตารางเปรียบเทียบ CSV</button>
+    </div>
+
+    <div class="grid grid-4">
+      <div class="card stat"><div class="value" id="cmpPaired">-</div><div class="label">จับคู่ได้ (คน)</div></div>
+      <div class="card stat"><div class="value" id="cmpImproved" style="color:#10b981">-</div><div class="label">ดีขึ้น (คน)</div></div>
+      <div class="card stat"><div class="value" id="cmpImprovedPct" style="color:#10b981">-</div><div class="label">% ดีขึ้น</div></div>
+      <div class="card stat"><div class="value" id="cmpMeanChange">-</div><div class="label">เปลี่ยนแปลงเฉลี่ย (%)</div></div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;margin-top:20px;">
+      <div style="max-height:500px;overflow:auto;">
+        <table>
+          <thead><tr>
+            <th>รหัสผู้เล่น</th><th>เพศ</th><th>อายุ</th><th>ชั้น</th>
+            <th>Pre %</th><th>Pre กลุ่ม</th>
+            <th>Post %</th><th>Post กลุ่ม</th>
+            <th>เปลี่ยนแปลง</th><th>ผลลัพธ์</th>
+          </tr></thead>
+          <tbody id="cmpTbody"><tr><td colspan="10" style="text-align:center;padding:40px;color:var(--gray);">รอข้อมูล...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<button class="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<footer class="footer"><p>🎮 GAST Quiz Project</p></footer>
+
+<script>
+function fmtDate(iso){return iso ? new Date(iso).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}) : '-'}
+function levelTH(k){return ({normal:'🟢 ปกติ',risk:'🟡 คลั่งไคล้',addict:'🔴 น่าจะติด'})[k]||'-'}
+function levelBadgeClass(k){return k==='addict' ? 'addicted' : k}
+
+async function refresh(){
+  try{
+    const preRes = await fetch('/api/pretest').then(r=>r.json());
+    const pretests = preRes.data || [];
+
+    preTotalCount.textContent = pretests.length;
+    preNormalCount.textContent = pretests.filter(p=>p.riskLevel==='normal').length;
+    preRiskCount.textContent   = pretests.filter(p=>p.riskLevel==='risk').length;
+    preAddictCount.textContent = pretests.filter(p=>p.riskLevel==='addict').length;
+
+    if(!pretests.length){
+      preTbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--gray);">ยังไม่มีข้อมูล — รอนักเรียนทำ Pre-test</td></tr>';
+    }else{
+      const sorted = [...pretests].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+      preTbody.innerHTML = sorted.map(p=>{
+        const d = p.dimensionScores || {};
+        return `<tr>
+          <td><b>${p.playerId}</b></td><td>${p.gender}</td><td>${p.age}</td><td>${p.grade}</td>
+          <td>${p.dailyPlayTime||'-'}</td>
+          <td>${d.preoccupation??'-'}</td><td>${d.control??'-'}</td><td>${d.impairment??'-'}</td>
+          <td><b>${p.totalScore}</b></td>
+          <td><span class="badge ${levelBadgeClass(p.riskLevel)}">${levelTH(p.riskLevel)}</span></td>
+          <td><small>${fmtDate(p.timestamp)}</small></td></tr>`;
+      }).join('');
+    }
+
+    const cmpRes = await fetch('/api/comparison').then(r=>r.json());
+    const summary = cmpRes.summary || {};
+    const paired  = cmpRes.data || [];
+
+    cmpPaired.textContent      = summary.totalPaired || 0;
+    cmpImproved.textContent    = summary.improvedCount || 0;
+    cmpImprovedPct.textContent = summary.totalPaired ? (summary.improvedPercent + '%') : '-';
+    cmpMeanChange.textContent  = summary.totalPaired ? (summary.meanChange > 0 ? '+' : '') + summary.meanChange + '%' : '-';
+
+    if(!paired.length){
+      cmpTbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--gray);">ยังไม่มีคู่ข้อมูลที่จับคู่ได้</td></tr>';
+    }else{
+      cmpTbody.innerHTML = paired.map(p=>`<tr>
+        <td><b>${p.playerId}</b></td><td>${p.gender}</td><td>${p.age}</td><td>${p.grade}</td>
+        <td>${p.prePercent}%</td><td><span class="badge ${levelBadgeClass(p.preLevel)}">${levelTH(p.preLevel)}</span></td>
+        <td>${p.postPercent}%</td><td><span class="badge ${p.postLevel}">${p.postLevel==='addicted'?'🔴 น่าจะติด':p.postLevel==='risk'?'🟡 เสี่ยง':'🟢 ปกติ'}</span></td>
+        <td style="color:${p.improved?'#10b981':'#ef4444'}"><b>${p.changePercent>0?'+':''}${p.changePercent}%</b></td>
+        <td>${p.improved?'✅ ดีขึ้น':'⚠️ ไม่ดีขึ้น'}</td></tr>`).join('');
+    }
+
+    updateTime.textContent = new Date().toLocaleTimeString('th-TH');
+  }catch(e){console.error(e)}
+}
+
+function exportPretestCSV(){
+  fetch('/api/pretest').then(r=>r.json()).then(res=>{
+    const rs = res.data || [];
+    const h = ['playerId','gender','age','grade','dailyPlayTime','totalScore','scorePercent','riskLevel','timestamp'];
+    const csv = [h.join(','), ...rs.map(r=>h.map(x=>JSON.stringify(r[x]??'')).join(','))].join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'}));
+    a.download = `pretest-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  });
+}
+
+function exportComparisonCSV(){
+  window.location.href = '/api/export/comparison-csv';
+}
+
+refresh();
+setInterval(refresh, 30000);
+window.addEventListener('scroll',()=>{document.querySelector('.back-to-top').classList.toggle('show',window.scrollY>400);});
+</script>
+</body>
+</html>

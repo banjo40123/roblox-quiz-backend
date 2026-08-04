@@ -44,6 +44,8 @@
     <li><a href="dashboard.html">📊 Dashboard</a></li>
     <li><a href="criteria.html">📋 เกณฑ์วัดผล</a></li>
     <li><a href="assessment.html" class="active">📝 แบบประเมิน</a></li>
+    <li><a href="pretest.html">🧪 Pre-test</a></li>
+    <li><a href="pretest-dashboard.html">📈 ข้อมูล Pre-test</a></li>
     <li><a href="info.html">ℹ️ ข้อมูลโปรเจ็ค</a></li>
   </ul>
 </nav></header>
@@ -130,7 +132,7 @@ function calculate(){
 
   let group, color, advice, emoji;
   if(total <= 10){ group="ปกติ"; color="normal"; emoji="🟢"; advice="เก่งมาก! ใช้เกมพอดี รู้จักแบ่งเวลา พักผ่อน เรียน และเล่นกับเพื่อนได้สมดุล 🌟"; }
-  else if(total <= 20){ group="เสี่ยง"; color="risk"; emoji="🟡"; advice="เริ่มมีพฤติกรรมที่ต้องระวัง ลองตั้งเวลาเล่นและทำกิจกรรมอื่นบ้างนะ 💪"; }
+  else if(total <= 25){ group="เสี่ยง"; color="risk"; emoji="🟡"; advice="เริ่มมีพฤติกรรมที่ต้องระวัง ลองตั้งเวลาเล่นและทำกิจกรรมอื่นบ้างนะ 💪"; }
   else{ group="น่าจะติดเกม"; color="addicted"; emoji="🔴"; advice="การเล่นเกมเริ่มส่งผลกับชีวิตประจำวัน ลองคุยกับคนที่ไว้ใจ หรือพบผู้เชี่ยวชาญ 🤝"; }
 
   const res = document.getElementById('result');

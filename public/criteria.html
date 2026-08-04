@@ -16,6 +16,8 @@
     <li><a href="dashboard.html">📊 Dashboard</a></li>
     <li><a href="criteria.html" class="active">📋 เกณฑ์วัดผล</a></li>
     <li><a href="assessment.html">📝 แบบประเมิน</a></li>
+    <li><a href="pretest.html">🧪 Pre-test</a></li>
+    <li><a href="pretest-dashboard.html">📈 ข้อมูล Pre-test</a></li>
     <li><a href="info.html">ℹ️ ข้อมูลโปรเจ็ค</a></li>
   </ul>
 </nav></header>
@@ -58,7 +60,7 @@
           <tr><td>🔴 B (ประตูอีกฝั่ง)</td><td>พฤติกรรมเสี่ยงต่อการติดเกม</td><td><strong>2-3 คะแนน</strong></td></tr>
         </tbody>
       </table>
-      <p style="margin-top:14px;color:var(--gray);">คะแนนเต็มต่อชุด: Choice Score ~43 คะแนน + Behavior Modifier ~7 คะแนน = <strong>~50 คะแนน</strong></p>
+      <p style="margin-top:14px;color:var(--gray);">คะแนนเต็ม: 15 ข้อ × 3 คะแนน (สูงสุด) = <strong>45 คะแนน</strong> (แบ่งเป็น 3 มิติ มิติละ 5 ข้อ)</p>
     </div>
   </section>
 
@@ -73,13 +75,13 @@
       </div>
       <div class="card" style="border-left:6px solid #f59e0b;">
         <h3 style="color:#d97706;font-size:1.5rem;">🟡 กลุ่มเสี่ยง</h3>
-        <p style="font-size:2rem;font-weight:800;color:#d97706;margin:8px 0;">11 - 20 คะแนน</p>
+        <p style="font-size:2rem;font-weight:800;color:#d97706;margin:8px 0;">11 - 25 คะแนน</p>
         <p>เริ่มมีพฤติกรรมที่ต้องระวัง อาจใช้เวลากับเกมมากเกินไป</p>
         <p style="margin-top:10px;color:var(--gray);font-size:0.9rem;"><strong>คำแนะนำ:</strong> ตั้งเวลาเล่น ทำกิจกรรมอื่นบ้าง พูดคุยกับผู้ปกครอง</p>
       </div>
       <div class="card" style="border-left:6px solid #ef4444;">
         <h3 style="color:#dc2626;font-size:1.5rem;">🔴 น่าจะติดเกม</h3>
-        <p style="font-size:2rem;font-weight:800;color:#dc2626;margin:8px 0;">21+ คะแนน</p>
+        <p style="font-size:2rem;font-weight:800;color:#dc2626;margin:8px 0;">26+ คะแนน</p>
         <p>การเล่นเกมเริ่มส่งผลกระทบต่อชีวิตประจำวันชัดเจน</p>
         <p style="margin-top:10px;color:var(--gray);font-size:0.9rem;"><strong>คำแนะนำ:</strong> ปรึกษาผู้เชี่ยวชาญ (จิตแพทย์เด็ก/นักจิตวิทยา)</p>
       </div>
@@ -90,15 +92,15 @@
     <h2><span class="emoji">📊</span> สูตรคะแนน</h2>
     <div class="card" style="background:linear-gradient(135deg,#f9fafb,white);">
       <pre style="font-family:monospace;font-size:1rem;line-height:2;">
-Choice Score   = 15 ข้อ × 3 คะแนน (สูงสุด) = 45 คะแนน
-Behavior Modifier ≈ 7 คะแนน (ปัจจัยเสริม)
+Risk Score = 15 ข้อ × 3 คะแนน (สูงสุด) = 45 คะแนน
+  • มิติ 1 PREOCCUPATION (ข้อ 1-5)   → RiskStage1
+  • มิติ 2 CONTROL        (ข้อ 6-10)  → RiskStage2
+  • มิติ 3 IMPAIRMENT     (ข้อ 11-15) → RiskStage3
 ──────────────────────────────────────────
-<strong>Risk Score เต็ม ≈ 52 คะแนน</strong>
-
 จัดกลุ่มจากผลรวม:
   🟢 0-10  → ปกติ
-  🟡 11-20 → เสี่ยง
-  🔴 21+   → น่าจะติดเกม</pre>
+  🟡 11-25 → เสี่ยง
+  🔴 26+   → น่าจะติดเกม</pre>
     </div>
   </section>
 
