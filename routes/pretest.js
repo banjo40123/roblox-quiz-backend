@@ -275,4 +275,50 @@ router.get('/export/comparison-csv', (req, res) => {
   res.send(csv);
 });
 
+/* ═══════════════════════════════════════════════════════════════
+   POST /api/admin/rename-player  — แก้ไขรหัสผู้เล่นที่พิมพ์ผิด
+   ต้องใส่ header x-api-key ให้ตรงกับ API_SECRET (เหมือน /api/reset ของเดิม)
+   แก้ทั้งใน pretests.json (playerId) และ results.json
+   (playerId / playerName / displayName) เพื่อให้การจับคู่ Pre/Post ยังทำงานถูก
+   Body: { "oldId": "denchai4451", "newId": "denchaii" }
+   ═══════════════════════════════════════════════════════════════ */
+router.post('/admin/rename-player', (req, res) => {
+  const API_SECRET = process.env.API_SECRET || 'change-this-secret-now';
+  if (req.headers['x-api-key'] !== API_SECRET) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+
+  const { oldId, newId } = req.body || {};
+  if (!oldId || !newId) {
+    return res.status(400).json({ success: false, error: 'ต้องระบุ oldId และ newId' });
+  }
+
+  const oldLower = String(oldId).trim().toLowerCase();
+
+  const pretests = readJson(PRETEST_FILE);
+  let preCount = 0;
+  pretests.forEach(p => {
+    if (String(p.playerId || '').trim().toLowerCase() === oldLower) {
+      p.playerId = newId;
+      preCount += 1;
+    }
+  });
+  if (preCount) writeJson(PRETEST_FILE, pretests);
+
+  const sessions = readJson(SESSION_FILE);
+  let postCount = 0;
+  sessions.forEach(s => {
+    let touched = false;
+    if (String(s.playerId || '').trim().toLowerCase() === oldLower)    { s.playerId = newId;    touched = true; }
+    if (String(s.playerName || '').trim().toLowerCase() === oldLower)  { s.playerName = newId;  touched = true; }
+    if (String(s.displayName || '').trim().toLowerCase() === oldLower) { s.displayName = newId; touched = true; }
+    if (touched) postCount += 1;
+  });
+  if (postCount) writeJson(SESSION_FILE, sessions);
+
+  console.log(`[ADMIN] rename-player ${oldId} -> ${newId}: pretests=${preCount}, sessions=${postCount}`);
+
+  res.json({ success: true, oldId, newId, pretestsUpdated: preCount, sessionsUpdated: postCount });
+});
+
 module.exports = router;
