@@ -60,6 +60,20 @@ function classifyPost(score) {
   return 'normal';
 }
 
+/* ─── จับคู่ผู้เล่นระหว่าง Pre-test กับผลในเกม ──────────────────
+   Pre-test: playerId = รหัสที่นักเรียนพิมพ์เอง (มักเป็นชื่อผู้ใช้ Roblox)
+   ผลในเกม : playerId = Roblox UserId (ตัวเลข) ส่วนชื่อผู้ใช้อยู่ใน
+             playerName / displayName แยกต่างหาก
+   ดังนั้นเทียบแบบ exact playerId อย่างเดียวจะไม่เจอคู่เลย — ต้องเทียบ
+   กับทั้ง playerId, playerName, displayName ของฝั่งเกม (ไม่สนตัวพิมพ์เล็ก/ใหญ่)
+   ───────────────────────────────────────────────────────────── */
+function samePlayer(pre, post) {
+  const target = String(pre.playerId || '').trim().toLowerCase();
+  if (!target) return false;
+  return [post.playerId, post.playerName, post.displayName]
+    .some(v => String(v || '').trim().toLowerCase() === target);
+}
+
 /* ─── ปรับคะแนนให้เทียบกันได้ ─────────────────────────────────
    Pre-test เต็ม 48, Post-test (ในเกม) เต็ม 45
    จึงต้องแปลงเป็นร้อยละก่อนเปรียบเทียบ
@@ -172,7 +186,7 @@ router.get('/comparison', (req, res) => {
   pretests.forEach(pre => {
     // หา Post-test ของผู้เล่นคนเดียวกัน ที่ทำ "หลัง" Pre-test
     const posts = sessions
-      .filter(s => s.playerId === pre.playerId &&
+      .filter(s => samePlayer(pre, s) &&
                    new Date(s.submittedAt || s.timestamp) > new Date(pre.timestamp))
       .sort((a, b) => new Date(a.submittedAt || a.timestamp) - new Date(b.submittedAt || b.timestamp));
 
@@ -235,7 +249,7 @@ router.get('/export/comparison-csv', (req, res) => {
 
   pretests.forEach(pre => {
     const posts = sessions
-      .filter(s => s.playerId === pre.playerId &&
+      .filter(s => samePlayer(pre, s) &&
                    new Date(s.submittedAt || s.timestamp) > new Date(pre.timestamp))
       .sort((a, b) => new Date(a.submittedAt || a.timestamp) - new Date(b.submittedAt || b.timestamp));
 
