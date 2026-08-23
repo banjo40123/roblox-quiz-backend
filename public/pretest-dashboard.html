@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8"><title>ข้อมูล Pre-test — GAST Quiz</title>
+<meta charset="UTF-8"><title>ข้อมูล Pre/Post-test — GAST Quiz</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="styles.css">
@@ -14,14 +14,15 @@
   <a href="#" class="logo"><span class="emoji">🎮</span><span>GAST Quiz</span></a>
   <ul class="nav-links">
     <li><a href="pretest.html">🧪 Pre-test</a></li>
-    <li><a href="pretest-dashboard.html" class="active">📈 ข้อมูล Pre-test</a></li>
+    <li><a href="posttest.html">📮 Post-test</a></li>
+    <li><a href="pretest-dashboard.html" class="active">📈 ข้อมูล Pre/Post</a></li>
   </ul>
 </nav></header>
 
 <main class="container">
   <section class="hero fade-in">
-    <h1>📈 ข้อมูล Pre-test &amp; เปรียบเทียบ Pre/Post</h1>
-    <p>ดูผล Pre-test ที่เก็บไว้ทั้งหมด และผลเปรียบเทียบกับ Post-test (ผลในเกม) ของผู้เล่นคนเดียวกัน</p>
+    <h1>📈 ข้อมูล Pre-test &amp; Post-test</h1>
+    <p>ดูผล Pre-test / Post-test ที่เก็บไว้ทั้งหมด และผลเปรียบเทียบก่อน–หลังเล่นเกมของผู้เล่นคนเดียวกัน</p>
     <p style="margin-top:8px;font-size:0.95rem;opacity:0.9;">อัปเดตล่าสุด: <span id="updateTime">-</span></p>
   </section>
 
@@ -41,7 +42,7 @@
     </div>
 
     <div class="card" style="padding:0;overflow:hidden;margin-top:20px;">
-      <div style="max-height:500px;overflow:auto;">
+      <div style="max-height:400px;overflow:auto;">
         <table>
           <thead><tr>
             <th>รหัสผู้เล่น</th><th>เพศ</th><th>อายุ</th><th>ชั้น</th>
@@ -58,10 +59,42 @@
     </div>
   </section>
 
-  <!-- ================= ส่วนที่ 2: เปรียบเทียบ Pre/Post ================= -->
+  <!-- ================= ส่วนที่ 2: Post-test ดิบ ================= -->
   <section class="section">
-    <h2><span class="emoji">📊</span> เปรียบเทียบ Pre-test กับ Post-test (ผลในเกม)</h2>
-    <p style="margin-bottom:16px;color:var(--gray);">จับคู่เฉพาะผู้เล่นที่ทำทั้ง Pre-test และเล่นเกมจบแล้ว (รหัสผู้เล่นต้องตรงกัน)</p>
+    <h2><span class="emoji">📮</span> ผล Post-test ทั้งหมด</h2>
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+      <button class="btn btn-accent" onclick="exportPosttestCSV()">📥 ส่งออก Post-test CSV</button>
+    </div>
+
+    <div class="grid grid-4">
+      <div class="card stat"><div class="value" id="postTotalCount">-</div><div class="label">ทำ Post-test แล้ว</div></div>
+      <div class="card stat"><div class="value" id="postNormalCount" style="color:#10b981">-</div><div class="label">🟢 กลุ่มปกติ</div></div>
+      <div class="card stat"><div class="value" id="postRiskCount" style="color:#f59e0b">-</div><div class="label">🟡 กลุ่มคลั่งไคล้</div></div>
+      <div class="card stat"><div class="value" id="postAddictCount" style="color:#ef4444">-</div><div class="label">🔴 น่าจะติดเกม</div></div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;margin-top:20px;">
+      <div style="max-height:400px;overflow:auto;">
+        <table>
+          <thead><tr>
+            <th>รหัสผู้เล่น</th><th>เพศ</th><th>อายุ</th><th>ชั้น</th>
+            <th>เวลาเล่น/วัน</th>
+            <th>หมกมุ่น<br><small>/18</small></th>
+            <th>ควบคุม<br><small>/15</small></th>
+            <th>ผลกระทบ<br><small>/15</small></th>
+            <th>คะแนนรวม<br><small>/48</small></th>
+            <th>กลุ่ม</th><th>วันที่ทำ</th>
+          </tr></thead>
+          <tbody id="postTbody"><tr><td colspan="11" style="text-align:center;padding:40px;color:var(--gray);">รอข้อมูล...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ส่วนที่ 3: เปรียบเทียบ Pre/Post GAST ================= -->
+  <section class="section">
+    <h2><span class="emoji">📊</span> เปรียบเทียบ Pre-test กับ Post-test</h2>
+    <p style="margin-bottom:16px;color:var(--gray);">จับคู่เฉพาะผู้เล่นที่ทำทั้ง Pre-test และ Post-test (รหัสผู้เล่นต้องตรงกัน และ Post-test ต้องทำหลัง Pre-test) — คะแนนดิบ เต็ม 48 ทั้งคู่</p>
     <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
       <button class="btn btn-accent" onclick="exportComparisonCSV()">📥 ส่งออกตารางเปรียบเทียบ CSV</button>
     </div>
@@ -70,7 +103,12 @@
       <div class="card stat"><div class="value" id="cmpPaired">-</div><div class="label">จับคู่ได้ (คน)</div></div>
       <div class="card stat"><div class="value" id="cmpImproved" style="color:#10b981">-</div><div class="label">ดีขึ้น (คน)</div></div>
       <div class="card stat"><div class="value" id="cmpImprovedPct" style="color:#10b981">-</div><div class="label">% ดีขึ้น</div></div>
-      <div class="card stat"><div class="value" id="cmpMeanChange">-</div><div class="label">เปลี่ยนแปลงเฉลี่ย (%)</div></div>
+      <div class="card stat"><div class="value" id="cmpMeanChange">-</div><div class="label">คะแนนเปลี่ยนแปลงเฉลี่ย</div></div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <h3 style="color:var(--primary-dark);margin-bottom:14px;">คะแนนเฉลี่ยรายมิติ — ก่อน vs หลัง</h3>
+      <canvas id="dimChart"></canvas>
     </div>
 
     <div class="card" style="padding:0;overflow:hidden;margin-top:20px;">
@@ -78,13 +116,28 @@
         <table>
           <thead><tr>
             <th>รหัสผู้เล่น</th><th>เพศ</th><th>อายุ</th><th>ชั้น</th>
-            <th>Pre %</th><th>Pre กลุ่ม</th>
-            <th>Post %</th><th>Post กลุ่ม</th>
+            <th>Pre<br><small>/48</small></th><th>Pre กลุ่ม</th>
+            <th>Post<br><small>/48</small></th><th>Post กลุ่ม</th>
             <th>เปลี่ยนแปลง</th><th>ผลลัพธ์</th>
           </tr></thead>
           <tbody id="cmpTbody"><tr><td colspan="10" style="text-align:center;padding:40px;color:var(--gray);">รอข้อมูล...</td></tr></tbody>
         </table>
       </div>
+    </div>
+  </section>
+
+  <!-- ================= ส่วนที่ 4: คะแนนในเกม (ข้อมูลเสริม) ================= -->
+  <section class="section">
+    <h2><span class="emoji">🎮</span> คะแนนจากการเล่นเกม (ข้อมูลเสริม)</h2>
+    <p style="margin-bottom:16px;color:var(--gray);">
+      ⚠️ ข้อมูลชุดนี้เป็น<strong>ข้อมูลเสริม</strong>จากการเล่นเกมเท่านั้น ไม่ได้นำมาเทียบกับแบบทดสอบ GAST โดยตรง
+      (การวัดผลก่อน–หลังที่แท้จริงคือ Pre-test/Post-test ในส่วนที่ 3 ด้านบน)
+      ดูรายละเอียดฉบับเต็มได้ที่ <a href="roblox-reports.html" style="color:var(--primary-dark);font-weight:700;">หน้าคะแนนในเกม</a>
+    </p>
+    <div class="grid grid-4">
+      <div class="card stat"><div class="value" id="gameTotalCount">-</div><div class="label">เล่นเกมจบแล้ว</div></div>
+      <div class="card stat"><div class="value" id="gameAvgRisk">-</div><div class="label">Risk Score เฉลี่ย</div></div>
+      <div class="card stat"><div class="value" id="gameAvgTime">-</div><div class="label">เวลาเล่นเฉลี่ย</div></div>
     </div>
   </section>
 </main>
@@ -93,69 +146,123 @@
 <footer class="footer"><p>🎮 GAST Quiz Project</p></footer>
 
 <script>
+let dimChart;
 function fmtDate(iso){return iso ? new Date(iso).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}) : '-'}
+function fmtTime(s){if(!s)return '-';const m=Math.floor(s/60),x=s%60;return `${m}:${String(x).padStart(2,'0')}`}
 function levelTH(k){return ({normal:'🟢 ปกติ',risk:'🟡 คลั่งไคล้',addict:'🔴 น่าจะติด'})[k]||'-'}
 function levelBadgeClass(k){return k==='addict' ? 'addicted' : k}
 
+function renderTestTable(tbodyId, records){
+  const tbody = document.getElementById(tbodyId);
+  if(!records.length){
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--gray);">ยังไม่มีข้อมูล</td></tr>';
+    return;
+  }
+  const sorted = [...records].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+  tbody.innerHTML = sorted.map(p=>{
+    const d = p.dimensionScores || {};
+    return `<tr>
+      <td><b>${p.playerId}</b></td><td>${p.gender}</td><td>${p.age}</td><td>${p.grade}</td>
+      <td>${p.dailyPlayTime||'-'}</td>
+      <td>${d.preoccupation??'-'}</td><td>${d.control??'-'}</td><td>${d.impairment??'-'}</td>
+      <td><b>${p.totalScore}</b></td>
+      <td><span class="badge ${levelBadgeClass(p.riskLevel)}">${levelTH(p.riskLevel)}</span></td>
+      <td><small>${fmtDate(p.timestamp)}</small></td></tr>`;
+  }).join('');
+}
+
 async function refresh(){
   try{
-    const preRes = await fetch('/api/pretest').then(r=>r.json());
-    const pretests = preRes.data || [];
+    const [preRes, postRes, cmpRes, gameStats] = await Promise.all([
+      fetch('/api/pretest').then(r=>r.json()),
+      fetch('/api/posttest').then(r=>r.json()),
+      fetch('/api/comparison').then(r=>r.json()),
+      fetch('/api/stats').then(r=>r.json()),
+    ]);
 
-    preTotalCount.textContent = pretests.length;
+    const pretests  = preRes.data  || [];
+    const posttests = postRes.data || [];
+
+    preTotalCount.textContent  = pretests.length;
     preNormalCount.textContent = pretests.filter(p=>p.riskLevel==='normal').length;
     preRiskCount.textContent   = pretests.filter(p=>p.riskLevel==='risk').length;
     preAddictCount.textContent = pretests.filter(p=>p.riskLevel==='addict').length;
+    renderTestTable('preTbody', pretests);
 
-    if(!pretests.length){
-      preTbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--gray);">ยังไม่มีข้อมูล — รอนักเรียนทำ Pre-test</td></tr>';
-    }else{
-      const sorted = [...pretests].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
-      preTbody.innerHTML = sorted.map(p=>{
-        const d = p.dimensionScores || {};
-        return `<tr>
-          <td><b>${p.playerId}</b></td><td>${p.gender}</td><td>${p.age}</td><td>${p.grade}</td>
-          <td>${p.dailyPlayTime||'-'}</td>
-          <td>${d.preoccupation??'-'}</td><td>${d.control??'-'}</td><td>${d.impairment??'-'}</td>
-          <td><b>${p.totalScore}</b></td>
-          <td><span class="badge ${levelBadgeClass(p.riskLevel)}">${levelTH(p.riskLevel)}</span></td>
-          <td><small>${fmtDate(p.timestamp)}</small></td></tr>`;
-      }).join('');
-    }
+    postTotalCount.textContent  = posttests.length;
+    postNormalCount.textContent = posttests.filter(p=>p.riskLevel==='normal').length;
+    postRiskCount.textContent   = posttests.filter(p=>p.riskLevel==='risk').length;
+    postAddictCount.textContent = posttests.filter(p=>p.riskLevel==='addict').length;
+    renderTestTable('postTbody', posttests);
 
-    const cmpRes = await fetch('/api/comparison').then(r=>r.json());
+    // เปรียบเทียบ Pre/Post
     const summary = cmpRes.summary || {};
     const paired  = cmpRes.data || [];
 
     cmpPaired.textContent      = summary.totalPaired || 0;
     cmpImproved.textContent    = summary.improvedCount || 0;
     cmpImprovedPct.textContent = summary.totalPaired ? (summary.improvedPercent + '%') : '-';
-    cmpMeanChange.textContent  = summary.totalPaired ? (summary.meanChange > 0 ? '+' : '') + summary.meanChange + '%' : '-';
+    cmpMeanChange.textContent  = summary.totalPaired ? (summary.meanChange > 0 ? '+' : '') + summary.meanChange : '-';
 
     if(!paired.length){
-      cmpTbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--gray);">ยังไม่มีคู่ข้อมูลที่จับคู่ได้</td></tr>';
+      cmpTbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--gray);">ยังไม่มีคู่ข้อมูลที่จับคู่ได้ — ต้องทำทั้ง Pre-test และ Post-test ด้วยรหัสเดียวกัน</td></tr>';
     }else{
       cmpTbody.innerHTML = paired.map(p=>`<tr>
         <td><b>${p.playerId}</b></td><td>${p.gender}</td><td>${p.age}</td><td>${p.grade}</td>
-        <td>${p.prePercent}%</td><td><span class="badge ${levelBadgeClass(p.preLevel)}">${levelTH(p.preLevel)}</span></td>
-        <td>${p.postPercent}%</td><td><span class="badge ${p.postLevel}">${p.postLevel==='addicted'?'🔴 น่าจะติด':p.postLevel==='risk'?'🟡 เสี่ยง':'🟢 ปกติ'}</span></td>
-        <td style="color:${p.improved?'#10b981':'#ef4444'}"><b>${p.changePercent>0?'+':''}${p.changePercent}%</b></td>
+        <td>${p.preScore}</td><td><span class="badge ${levelBadgeClass(p.preLevel)}">${levelTH(p.preLevel)}</span></td>
+        <td>${p.postScore}</td><td><span class="badge ${levelBadgeClass(p.postLevel)}">${levelTH(p.postLevel)}</span></td>
+        <td style="color:${p.improved?'#10b981':'#ef4444'}"><b>${p.changeScore>0?'+':''}${p.changeScore}</b></td>
         <td>${p.improved?'✅ ดีขึ้น':'⚠️ ไม่ดีขึ้น'}</td></tr>`).join('');
     }
+
+    // กราฟแท่งคู่ 3 มิติ — คะแนนเฉลี่ย Pre vs Post
+    const dims = ['preoccupation','control','impairment'];
+    const dimLabels = ['หมกมุ่นกับเกม','สูญเสียการควบคุม','ผลกระทบต่อหน้าที่'];
+    const n = paired.length;
+    const preAvg  = dims.map(d => n ? +(paired.reduce((s,p)=>s+(p.preDimensions[d]||0),0)/n).toFixed(2) : 0);
+    const postAvg = dims.map(d => n ? +(paired.reduce((s,p)=>s+(p.postDimensions[d]||0),0)/n).toFixed(2) : 0);
+
+    if(dimChart) dimChart.destroy();
+    dimChart = new Chart(document.getElementById('dimChart'), {
+      type: 'bar',
+      data: {
+        labels: dimLabels,
+        datasets: [
+          { label: 'ก่อนเล่น (Pre)', data: preAvg,  backgroundColor: '#8b5cf6' },
+          { label: 'หลังเล่น (Post)', data: postAvg, backgroundColor: '#10b981' },
+        ],
+      },
+      options: { plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } },
+    });
+
+    // คะแนนในเกม (ข้อมูลเสริม)
+    gameTotalCount.textContent = gameStats.totalSubmissions || 0;
+    gameAvgRisk.textContent    = gameStats.avgRiskScore || 0;
+    gameAvgTime.textContent    = fmtTime(gameStats.avgCompletionTime);
 
     updateTime.textContent = new Date().toLocaleTimeString('th-TH');
   }catch(e){console.error(e)}
 }
 
+function downloadCsvFromJson(records, header, filenamePrefix){
+  const csv = [header.join(','), ...records.map(r=>header.map(x=>JSON.stringify(r[x]??'')).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'}));
+  a.download = `${filenamePrefix}-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
 function exportPretestCSV(){
   fetch('/api/pretest').then(r=>r.json()).then(res=>{
-    const rs = res.data || [];
     const h = ['playerId','gender','age','grade','dailyPlayTime','totalScore','scorePercent','riskLevel','timestamp'];
-    const csv = [h.join(','), ...rs.map(r=>h.map(x=>JSON.stringify(r[x]??'')).join(','))].join('\n');
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'}));
-    a.download = `pretest-${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
+    downloadCsvFromJson(res.data || [], h, 'pretest');
+  });
+}
+
+function exportPosttestCSV(){
+  fetch('/api/posttest').then(r=>r.json()).then(res=>{
+    const h = ['playerId','gender','age','grade','dailyPlayTime','totalScore','scorePercent','riskLevel','timestamp'];
+    downloadCsvFromJson(res.data || [], h, 'posttest');
   });
 }
 

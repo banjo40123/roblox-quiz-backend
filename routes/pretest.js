@@ -1,200 +1,210 @@
 /* ═══════════════════════════════════════════════════════════════════
    routes/pretest.js
    ───────────────────────────────────────────────────────────────────
-   เพิ่มระบบ Pre-test ให้กับ roblox-quiz-backend
+   ระบบ Pre-test / Post-test ของ roblox-quiz-backend
+   เก็บข้อมูลใน MongoDB (collection: pretests, posttests)
+   ผลจากเกม Roblox (collection: gameResults) เป็นข้อมูลเสริม จัดการใน server.js
    ═══════════════════════════════════════════════════════════════════ */
 
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const { getCollection } = require('../db');
 
 const router = express.Router();
-
-/* ─── ที่เก็บข้อมูล ────────────────────────────────────────────── */
-const DATA_DIR      = path.join(__dirname, '..', 'data');
-const PRETEST_FILE  = path.join(DATA_DIR, 'pretests.json');
-const SESSION_FILE  = path.join(DATA_DIR, 'results.json');   // ของเดิม (Post-test จากเกม)
-
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-
-function readJson(file) {
-  try {
-    if (!fs.existsSync(file)) return [];
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
-  } catch (err) {
-    console.error(`อ่านไฟล์ ${file} ไม่สำเร็จ:`, err.message);
-    return [];
-  }
-}
-
-function writeJson(file, data) {
-  fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
-}
 
 /* ─── เกณฑ์แปลผล ──────────────────────────────────────────────
    ค่าจริงจาก "การคัดกรองสุขภาพจิตเด็กวัยเรียน" หน้า 73
    สถาบันสุขภาพจิตเด็กและวัยรุ่นราชนครินทร์ กรมสุขภาพจิต (ฉบับเด็กและวัยรุ่น)
-   จุดตัดแยกตามเพศ — ต้องตรงกับตรรกะใน public/pretest.html (classify())
-   PRE เต็ม 48 (16 ข้อ × 3), POST ใช้เกณฑ์เดิมของเกม (server.js: 0-10/11-25/26+ จาก 45 คะแนน)
+   จุดตัดแยกตามเพศ — ต้องตรงกับตรรกะใน public/pretest.html และ posttest.html
+   ใช้เกณฑ์เดียวกันทั้ง Pre-test และ Post-test เพราะเป็นแบบทดสอบชุดเดียวกัน (16 ข้อ เต็ม 48)
    ⚠️ กรณี "ไม่ระบุเพศ" เอกสารต้นฉบับไม่ได้กำหนดจุดตัดไว้ — ใช้เกณฑ์ฉบับ "หญิง" แทน
    ───────────────────────────────────────────────────────────── */
-const PRE_MAX  = 48;
-const POST_MAX = 45;
+const GAST_MAX = 48; // 16 ข้อ x 3 คะแนน — คะแนนเต็มของทั้ง Pre-test และ Post-test
 
-const PRE_CUTOFF_BY_GENDER = {
+const CUTOFF_BY_GENDER = {
   'ชาย' : [{ key:'normal', min:0 }, { key:'risk', min:24 }, { key:'addict', min:33 }],
   'หญิง': [{ key:'normal', min:0 }, { key:'risk', min:16 }, { key:'addict', min:23 }],
 };
-PRE_CUTOFF_BY_GENDER['ไม่ระบุ'] = PRE_CUTOFF_BY_GENDER['หญิง'];
+CUTOFF_BY_GENDER['ไม่ระบุ'] = CUTOFF_BY_GENDER['หญิง'];
 
-function classifyPre(score, gender) {
-  const tiers = PRE_CUTOFF_BY_GENDER[gender] || PRE_CUTOFF_BY_GENDER['ไม่ระบุ'];
+function classifyGast(score, gender) {
+  const tiers = CUTOFF_BY_GENDER[gender] || CUTOFF_BY_GENDER['ไม่ระบุ'];
   let picked = tiers[0].key;
   for (const t of tiers) if (score >= t.min) picked = t.key;
   return picked;
 }
 
-function classifyPost(score) {
-  if (score >= 26) return 'addict';
-  if (score >= 11) return 'risk';
-  return 'normal';
+/* ─── ฟังก์ชันช่วยเข้าถึง MongoDB ──────────────────────────────
+   ทุกฟังก์ชัน project ตัด _id ทิ้ง เพื่อให้รูปแบบข้อมูลที่ส่งกลับ
+   เหมือนกับตอนที่ยังเก็บเป็นไฟล์ JSON ทุกประการ
+   ───────────────────────────────────────────────────────────── */
+async function findAll(collectionName, filter = {}) {
+  const col = await getCollection(collectionName);
+  return col.find(filter, { projection: { _id: 0 } }).toArray();
+}
+async function insertRecord(collectionName, doc) {
+  const col = await getCollection(collectionName);
+  await col.insertOne(doc);
+}
+async function findDuplicateToday(collectionName, playerId) {
+  const today = new Date().toISOString().slice(0, 10);
+  const docs = await findAll(collectionName, { playerId });
+  return docs.find(d => String(d.timestamp || '').slice(0, 10) === today);
 }
 
-/* ─── จับคู่ผู้เล่นระหว่าง Pre-test กับผลในเกม ──────────────────
-   Pre-test: playerId = รหัสที่นักเรียนพิมพ์เอง (มักเป็นชื่อผู้ใช้ Roblox)
-   ผลในเกม : playerId = Roblox UserId (ตัวเลข) ส่วนชื่อผู้ใช้อยู่ใน
-             playerName / displayName แยกต่างหาก
-   ดังนั้นเทียบแบบ exact playerId อย่างเดียวจะไม่เจอคู่เลย — ต้องเทียบ
-   กับทั้ง playerId, playerName, displayName ของฝั่งเกม (ไม่สนตัวพิมพ์เล็ก/ใหญ่)
-   ───────────────────────────────────────────────────────────── */
-function samePlayer(pre, post) {
-  const target = String(pre.playerId || '').trim().toLowerCase();
-  if (!target) return false;
-  return [post.playerId, post.playerName, post.displayName]
-    .some(v => String(v || '').trim().toLowerCase() === target);
-}
+/* ═══════════════════════════════════════════════════════════════
+   ฟังก์ชันร่วมสำหรับบันทึกผล Pre-test / Post-test
+   (โครงสร้างข้อมูลและการตรวจสอบเหมือนกันทุกประการ ต่างกันแค่ collection
+   และ testType ที่ client ส่งมา)
+   ═══════════════════════════════════════════════════════════════ */
+async function handleSubmitTest(req, res, collectionName, requiredAnswerCount) {
+  const b = req.body;
 
-/* ─── ปรับคะแนนให้เทียบกันได้ ─────────────────────────────────
-   Pre-test เต็ม 48, Post-test (ในเกม) เต็ม 45
-   จึงต้องแปลงเป็นร้อยละก่อนเปรียบเทียบ
-   ───────────────────────────────────────────────────────────── */
-function toPercent(score, scale) {
-  return +(score / (scale === 'PRE' ? PRE_MAX : POST_MAX) * 100).toFixed(2);
+  const required = ['playerId', 'gender', 'age', 'grade', 'totalScore', 'answers'];
+  const missing  = required.filter(f => b[f] === undefined || b[f] === null || b[f] === '');
+
+  if (missing.length) {
+    return res.status(400).json({ success: false, error: 'ข้อมูลไม่ครบ', missing });
+  }
+
+  if (!Array.isArray(b.answers) || b.answers.length !== requiredAnswerCount) {
+    return res.status(400).json({
+      success: false,
+      error: `ต้องตอบคำถามให้ครบ ${requiredAnswerCount} ข้อ`,
+      received: Array.isArray(b.answers) ? b.answers.length : 0,
+    });
+  }
+
+  try {
+    const dup = await findDuplicateToday(collectionName, b.playerId);
+    if (dup) {
+      return res.status(409).json({
+        success  : false,
+        error    : 'ผู้เล่นรายนี้ทำแบบประเมินไปแล้วในวันนี้',
+        existing : { id: dup.id, totalScore: dup.totalScore, riskLevel: dup.riskLevel },
+      });
+    }
+
+    const record = {
+      id         : `${collectionName === 'posttests' ? 'POST' : 'PRE'}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      playerId   : b.playerId,
+      gender     : b.gender,
+      age        : b.age,
+      grade      : b.grade,
+      dailyPlayTime  : b.dailyPlayTime || 'ไม่ระบุ',
+      totalScore     : b.totalScore,
+      maxScore       : b.maxScore || GAST_MAX,
+      scorePercent   : +(b.totalScore / GAST_MAX * 100).toFixed(2),
+      dimensionScores: b.dimensionScores || {},
+      riskLevel      : classifyGast(b.totalScore, b.gender),
+      answers        : b.answers,
+      timestamp      : b.timestamp || new Date().toISOString(),
+    };
+
+    await insertRecord(collectionName, record);
+
+    console.log(`[${collectionName.toUpperCase()}] ${record.playerId} → ${record.totalScore} คะแนน (${record.riskLevel})`);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id         : record.id,
+        totalScore : record.totalScore,
+        riskLevel  : record.riskLevel,
+        dimensionScores: record.dimensionScores,
+      },
+    });
+  } catch (err) {
+    console.error(`[${collectionName}] บันทึกข้อมูลไม่สำเร็จ:`, err.message);
+    res.status(500).json({ success: false, error: 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง' });
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
    POST /api/pretest   — บันทึกผล Pre-test
    ═══════════════════════════════════════════════════════════════ */
-router.post('/pretest', (req, res) => {
-  const b = req.body;
-
-  // ตรวจข้อมูลที่จำเป็น
-  const required = ['playerId', 'gender', 'age', 'grade', 'totalScore', 'answers'];
-  const missing  = required.filter(f => b[f] === undefined || b[f] === null || b[f] === '');
-
-  if (missing.length) {
-    return res.status(400).json({
-      success: false,
-      error  : 'ข้อมูลไม่ครบ',
-      missing,
-    });
-  }
-
-  if (!Array.isArray(b.answers) || b.answers.length !== 16) {
-    return res.status(400).json({
-      success: false,
-      error  : 'ต้องตอบคำถามให้ครบ 16 ข้อ',
-      received: Array.isArray(b.answers) ? b.answers.length : 0,
-    });
-  }
-
-  const pretests = readJson(PRETEST_FILE);
-
-  // กันตอบซ้ำในวันเดียวกัน
-  const today = new Date().toISOString().slice(0, 10);
-  const dup = pretests.find(p =>
-    p.playerId === b.playerId && p.timestamp.slice(0, 10) === today);
-
-  if (dup) {
-    return res.status(409).json({
-      success  : false,
-      error    : 'ผู้เล่นรายนี้ทำแบบประเมินไปแล้วในวันนี้',
-      existing : { id: dup.id, totalScore: dup.totalScore, riskLevel: dup.riskLevel },
-    });
-  }
-
-  const record = {
-    id         : `PRE-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    playerId   : b.playerId,
-    gender     : b.gender,
-    age        : b.age,
-    grade      : b.grade,
-    dailyPlayTime  : b.dailyPlayTime || 'ไม่ระบุ',
-    totalScore     : b.totalScore,
-    maxScore       : b.maxScore || PRE_MAX,
-    scorePercent   : toPercent(b.totalScore, 'PRE'),
-    dimensionScores: b.dimensionScores || {},
-    riskLevel      : classifyPre(b.totalScore, b.gender),
-    answers        : b.answers,
-    timestamp      : b.timestamp || new Date().toISOString(),
-  };
-
-  pretests.push(record);
-  writeJson(PRETEST_FILE, pretests);
-
-  console.log(`[PRE-TEST] ${record.playerId} → ${record.totalScore} คะแนน (${record.riskLevel})`);
-
-  res.status(201).json({
-    success: true,
-    data: {
-      id         : record.id,
-      totalScore : record.totalScore,
-      riskLevel  : record.riskLevel,
-      dimensionScores: record.dimensionScores,
-    },
-  });
-});
+router.post('/pretest', (req, res) => handleSubmitTest(req, res, 'pretests', 16));
 
 /* ═══════════════════════════════════════════════════════════════
    GET /api/pretest            — ดึงผล Pre-test ทั้งหมด
    GET /api/pretest/:playerId  — ดึงผลของผู้เล่นรายเดียว
    ═══════════════════════════════════════════════════════════════ */
-router.get('/pretest', (req, res) => {
-  const pretests = readJson(PRETEST_FILE);
-  res.json({ success: true, count: pretests.length, data: pretests });
+router.get('/pretest', async (req, res) => {
+  try {
+    const pretests = await findAll('pretests');
+    res.json({ success: true, count: pretests.length, data: pretests });
+  } catch (err) {
+    console.error('[pretest] อ่านข้อมูลไม่สำเร็จ:', err.message);
+    res.status(500).json({ success: false, error: 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ' });
+  }
 });
 
-router.get('/pretest/:playerId', (req, res) => {
-  const pretests = readJson(PRETEST_FILE);
-  const found = pretests.filter(p => p.playerId === req.params.playerId);
-
-  if (!found.length) {
-    return res.status(404).json({ success: false, error: 'ไม่พบข้อมูลผู้เล่นรายนี้' });
+router.get('/pretest/:playerId', async (req, res) => {
+  try {
+    const found = await findAll('pretests', { playerId: req.params.playerId });
+    if (!found.length) {
+      return res.status(404).json({ success: false, error: 'ไม่พบข้อมูลผู้เล่นรายนี้' });
+    }
+    res.json({ success: true, data: found });
+  } catch (err) {
+    console.error('[pretest/:playerId] อ่านข้อมูลไม่สำเร็จ:', err.message);
+    res.status(500).json({ success: false, error: 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ' });
   }
-  res.json({ success: true, data: found });
 });
 
 /* ═══════════════════════════════════════════════════════════════
-   GET /api/comparison  — เปรียบเทียบ Pre-test กับ Post-test
+   POST /api/posttest  — บันทึกผล Post-test (ทำหลังเล่นเกมจบ)
+   ตรรกะเดียวกับ /api/pretest ทุกประการ ต่างกันแค่ collection
    ═══════════════════════════════════════════════════════════════ */
-router.get('/comparison', (req, res) => {
-  const pretests = readJson(PRETEST_FILE);
-  const sessions = readJson(SESSION_FILE);
+router.post('/posttest', (req, res) => handleSubmitTest(req, res, 'posttests', 16));
+
+/* ═══════════════════════════════════════════════════════════════
+   GET /api/posttest            — ดึงผล Post-test ทั้งหมด
+   GET /api/posttest/:playerId  — ดึงผลของผู้เล่นรายเดียว
+   ═══════════════════════════════════════════════════════════════ */
+router.get('/posttest', async (req, res) => {
+  try {
+    const posttests = await findAll('posttests');
+    res.json({ success: true, count: posttests.length, data: posttests });
+  } catch (err) {
+    console.error('[posttest] อ่านข้อมูลไม่สำเร็จ:', err.message);
+    res.status(500).json({ success: false, error: 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ' });
+  }
+});
+
+router.get('/posttest/:playerId', async (req, res) => {
+  try {
+    const found = await findAll('posttests', { playerId: req.params.playerId });
+    if (!found.length) {
+      return res.status(404).json({ success: false, error: 'ไม่พบข้อมูลผู้เล่นรายนี้' });
+    }
+    res.json({ success: true, data: found });
+  } catch (err) {
+    console.error('[posttest/:playerId] อ่านข้อมูลไม่สำเร็จ:', err.message);
+    res.status(500).json({ success: false, error: 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ' });
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   สร้างตารางจับคู่ Pre-test กับ Post-test ของผู้เล่นคนเดียวกัน
+   (playerId ตรงกันเป๊ะ + Post-test ต้องทำ "หลัง" Pre-test เท่านั้น)
+   คะแนนเต็มเท่ากันทั้งคู่ (48) จึงเทียบคะแนนดิบได้เลย ไม่ต้องแปลงร้อยละ
+   ═══════════════════════════════════════════════════════════════ */
+async function buildComparison() {
+  const pretests  = await findAll('pretests');
+  const posttests = await findAll('posttests');
 
   const paired = [];
 
   pretests.forEach(pre => {
-    // หา Post-test ของผู้เล่นคนเดียวกัน ที่ทำ "หลัง" Pre-test
-    const posts = sessions
-      .filter(s => samePlayer(pre, s) &&
-                   new Date(s.submittedAt || s.timestamp) > new Date(pre.timestamp))
-      .sort((a, b) => new Date(a.submittedAt || a.timestamp) - new Date(b.submittedAt || b.timestamp));
+    const matches = posttests
+      .filter(post => post.playerId === pre.playerId &&
+                       new Date(post.timestamp) > new Date(pre.timestamp))
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-    if (!posts.length) return;   // ยังไม่ได้เล่นเกม → ข้าม
+    if (!matches.length) return; // ยังไม่ได้ทำ Post-test → ข้าม
 
-    const post = posts[0];
-    const prePct  = toPercent(pre.totalScore, 'PRE');
-    const postPct = toPercent(post.riskScore, 'POST');
+    const post = matches[0];
+    const changeScore = post.totalScore - pre.totalScore; // ค่าลบ = คะแนนความเสี่ยงลดลง = ดีขึ้น
 
     paired.push({
       playerId : pre.playerId,
@@ -202,87 +212,86 @@ router.get('/comparison', (req, res) => {
       age      : pre.age,
       grade    : pre.grade,
 
-      preScore    : pre.totalScore,
-      preLevel    : pre.riskLevel,
-      prePercent  : prePct,
+      preScore  : pre.totalScore,
+      preLevel  : pre.riskLevel,
+      postScore : post.totalScore,
+      postLevel : post.riskLevel,
 
-      postScore   : post.riskScore,
-      postLevel   : post.riskGroup,
-      postPercent : postPct,
+      changeScore,
+      improved     : changeScore < 0,
+      levelChanged : pre.riskLevel !== post.riskLevel,
 
-      // ค่าลบ = คะแนนความเสี่ยงลดลง = ภูมิคุ้มกันดีขึ้น
-      changePercent : +(postPct - prePct).toFixed(2),
-      improved      : postPct < prePct,
-      levelChanged  : pre.riskLevel !== post.riskGroup,
+      // ข้อมูลรายมิติ ไว้ให้แดชบอร์ดวาดกราฟเปรียบเทียบ Pre/Post แต่ละมิติ
+      preDimensions  : pre.dimensionScores  || {},
+      postDimensions : post.dimensionScores || {},
     });
   });
 
-  // สถิติสรุป
   const n = paired.length;
   const summary = n ? {
     totalPaired    : n,
     improvedCount  : paired.filter(p => p.improved).length,
     improvedPercent: +(paired.filter(p => p.improved).length / n * 100).toFixed(2),
-    meanPrePercent : +(paired.reduce((s, p) => s + p.prePercent, 0) / n).toFixed(2),
-    meanPostPercent: +(paired.reduce((s, p) => s + p.postPercent, 0) / n).toFixed(2),
-    meanChange     : +(paired.reduce((s, p) => s + p.changePercent, 0) / n).toFixed(2),
+    meanPreScore   : +(paired.reduce((s, p) => s + p.preScore, 0) / n).toFixed(2),
+    meanPostScore  : +(paired.reduce((s, p) => s + p.postScore, 0) / n).toFixed(2),
+    meanChange     : +(paired.reduce((s, p) => s + p.changeScore, 0) / n).toFixed(2),
   } : { totalPaired: 0 };
 
-  res.json({ success: true, summary, data: paired });
+  return { summary, paired };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GET /api/comparison  — เปรียบเทียบ Pre-test กับ Post-test
+   ═══════════════════════════════════════════════════════════════ */
+router.get('/comparison', async (req, res) => {
+  try {
+    const { summary, paired } = await buildComparison();
+    res.json({ success: true, summary, data: paired });
+  } catch (err) {
+    console.error('[comparison] คำนวณไม่สำเร็จ:', err.message);
+    res.status(500).json({ success: false, error: 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ' });
+  }
 });
 
 /* ═══════════════════════════════════════════════════════════════
    GET /api/export/comparison-csv  — ดาวน์โหลดตารางเปรียบเทียบ
    ═══════════════════════════════════════════════════════════════ */
-router.get('/export/comparison-csv', (req, res) => {
-  const pretests = readJson(PRETEST_FILE);
-  const sessions = readJson(SESSION_FILE);
+router.get('/export/comparison-csv', async (req, res) => {
+  try {
+    const { paired } = await buildComparison();
 
-  const header = [
-    'playerId', 'gender', 'age', 'grade',
-    'preScore', 'prePercent', 'preLevel',
-    'postScore', 'postPercent', 'postLevel',
-    'changePercent', 'improved',
-  ];
+    const header = [
+      'playerId', 'gender', 'age', 'grade',
+      'preScore', 'preLevel', 'postScore', 'postLevel',
+      'changeScore', 'improved',
+    ];
 
-  const rows = [];
-
-  pretests.forEach(pre => {
-    const posts = sessions
-      .filter(s => samePlayer(pre, s) &&
-                   new Date(s.submittedAt || s.timestamp) > new Date(pre.timestamp))
-      .sort((a, b) => new Date(a.submittedAt || a.timestamp) - new Date(b.submittedAt || b.timestamp));
-
-    if (!posts.length) return;
-
-    const post    = posts[0];
-    const prePct  = toPercent(pre.totalScore, 'PRE');
-    const postPct = toPercent(post.riskScore, 'POST');
-
-    rows.push([
-      pre.playerId, pre.gender, pre.age, pre.grade,
-      pre.totalScore, prePct, pre.riskLevel,
-      post.riskScore, postPct, post.riskGroup,
-      (postPct - prePct).toFixed(2),
-      postPct < prePct ? 'ดีขึ้น' : 'ไม่ดีขึ้น',
+    const rows = paired.map(p => [
+      p.playerId, p.gender, p.age, p.grade,
+      p.preScore, p.preLevel, p.postScore, p.postLevel,
+      p.changeScore,
+      p.improved ? 'ดีขึ้น' : 'ไม่ดีขึ้น',
     ].join(','));
-  });
 
-  const csv = '﻿' + header.join(',') + '\n' + rows.join('\n');  // BOM กันภาษาไทยเพี้ยนใน Excel
+    const csv = '﻿' + header.join(',') + '\n' + rows.join('\n');  // BOM กันภาษาไทยเพี้ยนใน Excel
 
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="comparison.csv"');
-  res.send(csv);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="comparison.csv"');
+    res.send(csv);
+  } catch (err) {
+    console.error('[export/comparison-csv] สร้างไฟล์ไม่สำเร็จ:', err.message);
+    res.status(500).json({ success: false, error: 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ' });
+  }
 });
 
 /* ═══════════════════════════════════════════════════════════════
    POST /api/admin/rename-player  — แก้ไขรหัสผู้เล่นที่พิมพ์ผิด
    ต้องใส่ header x-api-key ให้ตรงกับ API_SECRET (เหมือน /api/reset ของเดิม)
-   แก้ทั้งใน pretests.json (playerId) และ results.json
-   (playerId / playerName / displayName) เพื่อให้การจับคู่ Pre/Post ยังทำงานถูก
+   แก้ playerId ใน pretests, posttests และ playerId/playerName/displayName
+   ใน gameResults เพื่อให้การจับคู่ยังทำงานถูก
    Body: { "oldId": "denchai4451", "newId": "denchaii" }
    ═══════════════════════════════════════════════════════════════ */
-router.post('/admin/rename-player', (req, res) => {
+router.post('/admin/rename-player', async (req, res) => {
   const API_SECRET = process.env.API_SECRET || 'change-this-secret-now';
   if (req.headers['x-api-key'] !== API_SECRET) {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -293,32 +302,41 @@ router.post('/admin/rename-player', (req, res) => {
     return res.status(400).json({ success: false, error: 'ต้องระบุ oldId และ newId' });
   }
 
-  const oldLower = String(oldId).trim().toLowerCase();
+  try {
+    const preCol  = await getCollection('pretests');
+    const postCol = await getCollection('posttests');
+    const gameCol = await getCollection('gameResults');
 
-  const pretests = readJson(PRETEST_FILE);
-  let preCount = 0;
-  pretests.forEach(p => {
-    if (String(p.playerId || '').trim().toLowerCase() === oldLower) {
-      p.playerId = newId;
-      preCount += 1;
+    const preResult  = await preCol.updateMany({ playerId: oldId }, { $set: { playerId: newId } });
+    const postResult = await postCol.updateMany({ playerId: oldId }, { $set: { playerId: newId } });
+
+    // ฝั่งเกม รหัสอาจอยู่ใน playerId, playerName หรือ displayName ก็ได้ (case-insensitive)
+    const oldLower = String(oldId).trim().toLowerCase();
+    const gameDocs = await gameCol.find({}).toArray();
+    let gameCount = 0;
+    for (const doc of gameDocs) {
+      const update = {};
+      if (String(doc.playerId || '').trim().toLowerCase() === oldLower)    update.playerId = newId;
+      if (String(doc.playerName || '').trim().toLowerCase() === oldLower)  update.playerName = newId;
+      if (String(doc.displayName || '').trim().toLowerCase() === oldLower) update.displayName = newId;
+      if (Object.keys(update).length) {
+        await gameCol.updateOne({ _id: doc._id }, { $set: update });
+        gameCount += 1;
+      }
     }
-  });
-  if (preCount) writeJson(PRETEST_FILE, pretests);
 
-  const sessions = readJson(SESSION_FILE);
-  let postCount = 0;
-  sessions.forEach(s => {
-    let touched = false;
-    if (String(s.playerId || '').trim().toLowerCase() === oldLower)    { s.playerId = newId;    touched = true; }
-    if (String(s.playerName || '').trim().toLowerCase() === oldLower)  { s.playerName = newId;  touched = true; }
-    if (String(s.displayName || '').trim().toLowerCase() === oldLower) { s.displayName = newId; touched = true; }
-    if (touched) postCount += 1;
-  });
-  if (postCount) writeJson(SESSION_FILE, sessions);
+    console.log(`[ADMIN] rename-player ${oldId} -> ${newId}: pretests=${preResult.modifiedCount}, posttests=${postResult.modifiedCount}, gameResults=${gameCount}`);
 
-  console.log(`[ADMIN] rename-player ${oldId} -> ${newId}: pretests=${preCount}, sessions=${postCount}`);
-
-  res.json({ success: true, oldId, newId, pretestsUpdated: preCount, sessionsUpdated: postCount });
+    res.json({
+      success: true, oldId, newId,
+      pretestsUpdated : preResult.modifiedCount,
+      posttestsUpdated: postResult.modifiedCount,
+      gameResultsUpdated: gameCount,
+    });
+  } catch (err) {
+    console.error('[admin/rename-player] ทำงานไม่สำเร็จ:', err.message);
+    res.status(500).json({ success: false, error: 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ' });
+  }
 });
 
 module.exports = router;

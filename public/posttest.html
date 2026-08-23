@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>แบบประเมินก่อนเล่นเกม | ระบบพัฒนาภูมิคุ้มกันในการใช้สื่อออนไลน์</title>
+<title>แบบประเมินหลังเล่นเกม | ระบบพัฒนาภูมิคุ้มกันในการใช้สื่อออนไลน์</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -59,6 +59,7 @@
   /* ---------- Form fields ---------- */
   .field{margin-bottom:22px}
   .field > label{display:block;font-weight:600;font-size:18px;margin-bottom:10px}
+  .hint{display:block;font-weight:400;font-size:14px;color:var(--ink-soft);margin-top:4px}
   .req{color:var(--red)}
   select, input[type=text]{
     width:100%;padding:12px 14px;font-family:inherit;font-size:18px;
@@ -129,12 +130,19 @@
   .dim .val{font-size:30px;font-weight:700;color:var(--brand-dark)}
   .dim .max{font-size:15px;color:var(--ink-soft)}
 
-  .invite{
+  /* ---------- Compare (Pre vs Post) ---------- */
+  .compare{
     background:linear-gradient(135deg,#2b5f8f,#1e4468);color:#fff;
     border-radius:12px;padding:26px;text-align:center;margin-bottom:20px;
   }
-  .invite h3{font-size:23px;margin-bottom:10px}
-  .invite p{font-size:17px;opacity:.92;margin-bottom:18px}
+  .compare h3{font-size:22px;margin-bottom:16px}
+  .compare-row{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap}
+  .compare-box{background:rgba(255,255,255,.12);border-radius:10px;padding:14px 22px;min-width:110px}
+  .compare-box .lbl{font-size:14px;opacity:.85}
+  .compare-box .num{font-size:34px;font-weight:700}
+  .compare-arrow{font-size:28px}
+  .compare-change{margin-top:16px;font-size:19px;font-weight:700}
+  .compare-note{margin-top:14px;font-size:15px;opacity:.9}
 
   .msg{padding:14px 18px;border-radius:9px;margin-bottom:16px;font-size:17px;display:none}
   .msg.err{background:#fdecea;border:2px solid var(--red);color:var(--red);display:block}
@@ -156,7 +164,7 @@
 <div class="wrap">
 
   <header>
-    <h1>แบบประเมินก่อนเล่นเกม</h1>
+    <h1>แบบประเมินหลังเล่นเกม</h1>
     <p>ระบบพัฒนาภูมิคุ้มกันในการใช้สื่อออนไลน์ สำหรับนักเรียนช่วงชั้นที่ 2</p>
   </header>
 
@@ -174,9 +182,9 @@
       <h2>ส่วนที่ 1 &nbsp;ข้อมูลทั่วไป</h2>
 
       <div class="consent-box">
-        <strong>สวัสดีนะ! ก่อนเริ่มเล่นเกม อ่านตรงนี้ก่อนนะ</strong>
+        <strong>เล่นเกมจบแล้วใช่ไหม? ทำแบบประเมินอีกครั้งกันนะ</strong>
         <ul>
-          <li>แบบสอบถามนี้ใช้เวลาประมาณ 5 นาที</li>
+          <li>แบบสอบถามนี้ใช้เวลาประมาณ 5 นาที เหมือนครั้งก่อน</li>
           <li>ไม่มีข้อไหนถูกหรือผิด ตอบตามความจริงได้เลย</li>
           <li>เราไม่เก็บชื่อจริง–นามสกุลจริงของหนู</li>
           <li>หนูหยุดทำเมื่อไหร่ก็ได้ ไม่มีผลต่อการเรียน</li>
@@ -184,8 +192,10 @@
       </div>
 
       <div class="field">
-        <label>รหัสผู้เล่น (Player ID) <span class="req">*</span></label>
-        <input type="text" id="playerId" placeholder="กรอกรหัสที่ครูให้มา เช่น STUD001">
+        <label>รหัสผู้เล่น (Player ID) <span class="req">*</span>
+          <span class="hint">ต้องเป็นรหัสเดียวกับตอนทำ Pre-test นะ ไม่งั้นระบบจะเทียบผลก่อน-หลังให้ไม่ได้</span>
+        </label>
+        <input type="text" id="playerId" placeholder="กรอกรหัสเดิมที่ใช้ตอนทำ Pre-test">
       </div>
 
       <div class="field">
@@ -249,7 +259,7 @@
       <div class="msg" id="msg2"></div>
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="backToStep1()">&lsaquo; &nbsp;ย้อนกลับ</button>
-        <button class="btn btn-primary" id="submitBtn" onclick="submitPretest()">ส่งคำตอบ</button>
+        <button class="btn btn-primary" id="submitBtn" onclick="submitPosttest()">ส่งคำตอบ</button>
       </div>
     </div>
   </section>
@@ -289,20 +299,24 @@
 
       <p id="resAdvice" style="font-size:18px;padding:18px;background:#f4f6f8;border-radius:10px;margin-bottom:22px"></p>
 
-      <div class="invite">
-        <h3>พร้อมไปผจญภัยกันแล้วหรือยัง?</h3>
-        <p>
-          ต่อไปหนูจะได้เล่นเกม <strong>“กำแพงแห่งทางเลือก”</strong><br>
-          เกมนี้จะพาหนูไปเจอสถานการณ์จริงในชีวิตประจำวัน<br>
-          แล้วหนูจะได้เลือกเองว่าจะทำยังไง
-        </p>
-        <button class="btn btn-ghost" onclick="goToGame()">เริ่มเล่นเกม &nbsp;&rsaquo;</button>
-        <p style="margin-top:18px;font-size:15px;opacity:.85">
-          เล่นเกมจบแล้ว อย่าลืมกลับมาทำ<br>
-          <a href="posttest.html" style="color:#fff;font-weight:700;text-decoration:underline">แบบประเมินหลังเล่นเกม</a>
-          &nbsp;อีกครั้งนะ (ใช้รหัสผู้เล่นเดิม)
-        </p>
+      <!-- เปรียบเทียบ Pre กับ Post — เติมด้วย JS หลังดึงข้อมูล Pre-test มาเทียบ -->
+      <div class="compare hide" id="compareBox">
+        <h3>เทียบผลก่อน–หลังเล่นเกม</h3>
+        <div class="compare-row">
+          <div class="compare-box">
+            <div class="lbl">ก่อนเล่น (Pre)</div>
+            <div class="num" id="cmpPre">-</div>
+          </div>
+          <div class="compare-arrow">&rarr;</div>
+          <div class="compare-box">
+            <div class="lbl">หลังเล่น (Post)</div>
+            <div class="num" id="cmpPost">-</div>
+          </div>
+        </div>
+        <div class="compare-change" id="cmpChange"></div>
+        <p class="compare-note" id="cmpNote"></p>
       </div>
+      <div class="msg" id="noPreMsg" style="display:none"></div>
 
       <div class="msg ok" id="saveStatus" style="display:none"></div>
     </div>
@@ -314,12 +328,9 @@
 </div>
 
 <script>
-/* ══════════════════════════════════════════════════════════════
-   ⚠️ จุดที่นิสิตต้องแก้เอง — มี 3 จุด (ดูเครื่องหมาย  TODO )
-   ══════════════════════════════════════════════════════════════ */
-
 /* ────────────────────────────────────────────────────────────────
-   ข้อคำถาม GAST 16 ข้อ — ข้อความต้นฉบับจริง (ฉบับเด็กและวัยรุ่น)
+   ข้อคำถาม GAST 16 ข้อ — เหมือนกับ pretest.html ทุกตัวอักษร
+   (ห้ามแก้ข้อความ / เกณฑ์ / การคำนวณ ต่างจาก pretest.html)
    แหล่งที่มา: "การคัดกรองสุขภาพจิตเด็กวัยเรียน" หน้า 71-74
    สถาบันสุขภาพจิตเด็กและวัยรุ่นราชนครินทร์ กรมสุขภาพจิต
    ร่วมกับ นพ.ชาญวิทย์ พรนภดล ภาควิชาจิตเวชศาสตร์ ศิริราชพยาบาล
@@ -348,13 +359,7 @@ const QUESTIONS = [
   { id:16,  dim:"P", text:"หลายคนบอกว่าฉันติดเกม" },
 ];
 
-/* ────────────────────────────────────────────────────────────────
-   เกณฑ์การแปลผล (Cut-off Score) — ค่าจริงจากเอกสารต้นฉบับ
-   ฉบับเด็กและวัยรุ่น "แยกตามเพศ" (ชาย/หญิง มีจุดตัดต่างกัน)
-   ⚠️ กรณี "ไม่ระบุเพศ" เอกสารต้นฉบับไม่ได้กำหนดจุดตัดไว้ — ระบบนี้
-   ใช้เกณฑ์ฉบับ "หญิง" แทน (จุดตัดต่ำกว่า = อนุรักษนิยม/คัดกรองไว-กว่า)
-   เป็นทางเลือกของผู้วิจัย ควรระบุข้อจำกัดนี้ไว้ในบทที่ 3/5 ของเล่ม
-─────────────────────────────────────────────────────────────── */
+/* เกณฑ์การแปลผล — เหมือนกับ pretest.html ทุกประการ (ดูหมายเหตุที่นั่น) */
 const CUTOFF_BY_GENDER = {
   "ชาย": [
     { key:"normal", min: 0,  label:"กลุ่มปกติ",         desc:"ยังไม่มีปัญหาในการเล่นเกม", cls:"lv-normal" },
@@ -367,7 +372,7 @@ const CUTOFF_BY_GENDER = {
     { key:"addict", min:23,  label:"กลุ่มน่าจะติดเกม",   desc:"มีปัญหาในการเล่นเกมมาก",     cls:"lv-addict" },
   ],
 };
-CUTOFF_BY_GENDER["ไม่ระบุ"] = CUTOFF_BY_GENDER["หญิง"]; // ดูหมายเหตุด้านบน
+CUTOFF_BY_GENDER["ไม่ระบุ"] = CUTOFF_BY_GENDER["หญิง"];
 
 function classify(total, gender){
   const tiers = CUTOFF_BY_GENDER[gender] || CUTOFF_BY_GENDER["ไม่ระบุ"];
@@ -376,15 +381,8 @@ function classify(total, gender){
   return picked;
 }
 
-/* ────────────────────────────────────────────────────────────────
-   URL ของ Backend และลิงก์เกม Roblox
-─────────────────────────────────────────────────────────────── */
-const API_BASE  = "https://roblox-quiz-backend.onrender.com";
-const GAME_URL  = "https://www.roblox.com/th/games/129255415785159/Wall-of-Choices";
+const API_BASE = "https://roblox-quiz-backend.onrender.com";
 
-/* ══════════════════════════════════════════════════════════════
-   ตัวเลือกคำตอบ 4 ระดับ (0–3 คะแนน) — ตามมาตรวัดของ GAST
-   ══════════════════════════════════════════════════════════════ */
 const CHOICES = [
   { v:0, label:"ไม่ใช่เลย" },
   { v:1, label:"ไม่ค่อยใช่" },
@@ -394,7 +392,6 @@ const CHOICES = [
 
 let demographics = {};
 
-/* ---------- สร้างข้อคำถามลงหน้าเว็บ ---------- */
 function renderQuestions(){
   const box = document.getElementById("questions");
   box.innerHTML = QUESTIONS.map(q => `
@@ -413,7 +410,6 @@ function renderQuestions(){
     </div>`).join("");
 }
 
-/* ---------- แถบความคืบหน้า ---------- */
 function updateProgress(){
   const answered = QUESTIONS.filter(q =>
     document.querySelector(`input[name="q${q.id}"]:checked`)).length;
@@ -422,14 +418,12 @@ function updateProgress(){
     `ตอบแล้ว ${answered} จาก ${QUESTIONS.length} ข้อ`;
   document.getElementById("progressPct").textContent = pct + "%";
   document.getElementById("barFill").style.width = pct + "%";
-  // เอากรอบแดงออกเมื่อตอบแล้ว
   QUESTIONS.forEach(q=>{
     if(document.querySelector(`input[name="q${q.id}"]:checked`))
       document.getElementById("q"+q.id).classList.remove("unanswered");
   });
 }
 
-/* ---------- ตรวจข้อมูลส่วนที่ 1 แล้วไปส่วนที่ 2 ---------- */
 function goToStep2(){
   const msg = document.getElementById("msg1");
   const playerId = document.getElementById("playerId").value.trim();
@@ -462,7 +456,6 @@ function backToStep1(){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* ---------- คำนวณคะแนน ---------- */
 function calculate(){
   let total = 0;
   const byDim = { P:0, C:0, I:0 };
@@ -481,11 +474,9 @@ function calculate(){
   return { total, byDim, answers, tier };
 }
 
-/* ---------- ส่งคำตอบ ---------- */
-async function submitPretest(){
+async function submitPosttest(){
   const msg = document.getElementById("msg2");
 
-  // หาข้อที่ยังไม่ตอบ
   const missing = QUESTIONS.filter(q =>
     !document.querySelector(`input[name="q${q.id}"]:checked`));
 
@@ -504,7 +495,7 @@ async function submitPretest(){
   const result  = calculate();
   const payload = {
     ...demographics,
-    testType   : "pretest",
+    testType   : "posttest",
     totalScore : result.total,
     maxScore   : QUESTIONS.length * 3,
     dimensionScores : {
@@ -517,16 +508,14 @@ async function submitPretest(){
     timestamp : new Date().toISOString(),
   };
 
-  // เก็บไว้ในเครื่องก่อน กันข้อมูลหายถ้าเน็ตหลุด
   try{
-    sessionStorage.setItem("pretestResult", JSON.stringify(payload));
+    sessionStorage.setItem("posttestResult", JSON.stringify(payload));
   }catch(e){ /* บาง browser ปิด storage ไว้ */ }
 
   showResult(result);
 
-  // ส่งขึ้น Backend
   try{
-    const res = await fetch(`${API_BASE}/api/pretest`, {
+    const res = await fetch(`${API_BASE}/api/posttest`, {
       method  : "POST",
       headers : { "Content-Type":"application/json" },
       body    : JSON.stringify(payload),
@@ -546,9 +535,11 @@ async function submitPretest(){
     status.textContent = "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาแจ้งครูผู้ดูแล";
     status.style.display = "block";
   }
+
+  // ดึงผล Pre-test ของคนคนนี้มาเทียบให้ดู
+  loadComparison(result.total);
 }
 
-/* ---------- แสดงผลลัพธ์ ---------- */
 function showResult(r){
   document.getElementById("step2").classList.add("hide");
   document.getElementById("step3").classList.remove("hide");
@@ -564,9 +555,9 @@ function showResult(r){
   document.getElementById("resLevel").textContent = `${tier.label} — ${tier.desc}`;
 
   const advice = {
-    normal : "เยี่ยมมาก! ตอนนี้หนูจัดการเวลาเล่นเกมได้ดี ลองไปเล่นเกมของเราดูนะ จะได้เจอสถานการณ์สนุก ๆ ที่ช่วยให้หนูรู้เท่าทันสื่อออนไลน์มากขึ้น",
-    risk   : "หนูเริ่มใช้เวลากับเกมค่อนข้างมากแล้วนะ ลองไปเล่นเกมของเราดู จะได้ฝึกตัดสินใจในสถานการณ์ต่าง ๆ และรู้จักแบ่งเวลาให้ดีขึ้น",
-    addict : "การเล่นเกมเริ่มกระทบกับชีวิตประจำวันของหนูแล้วนะ ลองเล่นเกมของเราดู แล้วอย่าลืมคุยกับคุณครูหรือผู้ปกครองด้วยนะ",
+    normal : "เยี่ยมมาก! ตอนนี้หนูจัดการเวลาเล่นเกมได้ดี รักษาความสมดุลนี้ไว้นะ",
+    risk   : "หนูเริ่มใช้เวลากับเกมค่อนข้างมากแล้วนะ ลองตั้งเวลาเล่นและทำกิจกรรมอื่นบ้าง",
+    addict : "การเล่นเกมเริ่มกระทบกับชีวิตประจำวันของหนูแล้วนะ อย่าลืมคุยกับคุณครูหรือผู้ปกครองด้วยนะ",
   };
   document.getElementById("resAdvice").textContent = advice[tier.key];
 
@@ -576,12 +567,50 @@ function showResult(r){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* ---------- ไปเล่นเกม ---------- */
-function goToGame(){
-  window.open(GAME_URL, "_blank");
+/* ---------- ดึงผล Pre-test ของผู้เล่นคนนี้มาเทียบกับ Post-test ---------- */
+async function loadComparison(postTotal){
+  const box  = document.getElementById("compareBox");
+  const note = document.getElementById("noPreMsg");
+  try{
+    const res = await fetch(`${API_BASE}/api/pretest/${encodeURIComponent(demographics.playerId)}`);
+    if(!res.ok){
+      note.style.display = "block";
+      note.className = "msg err";
+      note.textContent = "ไม่พบข้อมูล Pre-test ของรหัสนี้ — อาจพิมพ์รหัสไม่ตรงกับตอนทำ Pre-test ครั้งก่อน";
+      return;
+    }
+    const json = await res.json();
+    const preRecords = json.data || [];
+    if(!preRecords.length) return;
+
+    // ใช้ Pre-test ล่าสุดที่ทำก่อนหน้า Post-test นี้
+    const pre = preRecords
+      .filter(p => new Date(p.timestamp) < new Date())
+      .sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp))[0] || preRecords[0];
+
+    const change = postTotal - pre.totalScore;
+    document.getElementById("cmpPre").textContent  = pre.totalScore;
+    document.getElementById("cmpPost").textContent = postTotal;
+
+    const changeEl = document.getElementById("cmpChange");
+    if(change < 0){
+      changeEl.textContent = `ลดลง ${Math.abs(change)} คะแนน — เยี่ยมมาก! แปลว่าความเสี่ยงลดลง 🎉`;
+    }else if(change > 0){
+      changeEl.textContent = `เพิ่มขึ้น ${change} คะแนน — ลองสังเกตพฤติกรรมการเล่นเกมของหนูดูอีกครั้งนะ`;
+    }else{
+      changeEl.textContent = `คะแนนเท่าเดิม`;
+    }
+    document.getElementById("cmpNote").textContent =
+      "ค่าลบ = คะแนนความเสี่ยงลดลง = ภูมิคุ้มกันในการใช้สื่อออนไลน์ดีขึ้น";
+
+    box.classList.remove("hide");
+  }catch(err){
+    note.style.display = "block";
+    note.className = "msg err";
+    note.textContent = "ดึงข้อมูล Pre-test มาเทียบไม่สำเร็จ";
+  }
 }
 
-/* ---------- เริ่มต้น ---------- */
 renderQuestions();
 updateProgress();
 </script>
